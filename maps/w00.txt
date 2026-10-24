@@ -1,0 +1,52 @@
+; VBWolf level 1 (original level). Compile with: python tools/mkmap.py maps/w00.txt maps/w00.map
+; Walls: # stone  V stone vent  R brick  P brick plaque  W wood  F wood painting  T tile  M metal
+;        E elevator switch (use it facing east or west)
+; Push walls (secret): * stone  & brick  % wood  $ metal
+; Doors: D normal  G gold lock  S silver lock  L elevator      Start: ^ > v <  (facing N E S W)
+; Objects: w puddle  b barrel  r wooden barrel  t table  l floor lamp  c chandelier  o ceiling light
+;          x pillar  y tree  p plant  u urn
+; Items:   k gold key  j silver key  f food  h first aid  a ammo  m machine gun  n rotary gun
+;          1-4 treasure  5 extra life  ! exit tile      Floor: .
+@name Intake
+@par 01:30
+@ceiling 56 56 60
+@floor 104 100 96
+; Enemies and patrol waypoints for this level
+@enemy g guard stand S
+@enemy q guard stand W ambush
+@enemy z mutant stand S medium
+@enemy Z ss stand W
+@enemy d dog patrol W
+@enemy e guard patrol E
+@enemy i guard patrol W
+@enemy s officer stand W
+@turn { S
+@turn } E
+@turn [ N
+@turn ] W
+####RRRRRRRRR#######################
+####R1....3.R######WWWFWWWWFWWW#####
+####R..2...4R######Wu.....y..kW#####
+#RRRPRRR&RRRPRRR###W.{..od.]..W#####
+#Rp...........pR###W........Z.W#####
+#R....g.c......R###W.a..t.....F#####
+#R...o.....o...VVVVW..........W#####
+#P......t......D.o.D....o.....W#####
+#R..........q..VVVVW.}.....[m.W#####
+#R...x..z..x...R###Wu.........W#####
+#Rf...........hRMMMMMMMMDMMMMMM#####
+#RRRRRDRRRRRRRRRMr...........rM#####
+######.#########M.}.e.......{.M#####
+######o#########M...x.....x...M#####
+######.#########M......o......MMMMM#
+######.#########M1............M...M#
+######D#########M..........s..G.o.E#
+##b.......b#####M.............M...M#
+##.........#####M...x.....x...MMMMM#
+##.........#####M.[....oi...].M#####
+#V....o....V####Ma...........fM#####
+##..w......#####MMMMMMMMMMMMMMM#####
+##.......a.#########################
+##....^....#########################
+##l.......l#########################
+####################################

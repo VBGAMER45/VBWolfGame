@@ -1,0 +1,59 @@
+; VBWolf level 2 (original level). Compile with: python tools/mkmap.py maps/w01.txt maps/w01.map
+@name Assembly
+@par 02:30
+@ceiling 48 52 60
+@floor 96 96 100
+; Walls: # stone  V stone vent  R brick  P brick plaque  W wood  F wood painting  T tile  M metal
+;        E elevator switch (use it facing east or west)
+; Push walls (secret): * stone  & brick  % wood  $ metal
+; Doors: D normal  G gold lock  S silver lock  L elevator      Start: ^ > v <  (facing N E S W)
+; Objects: w puddle  b barrel  r wooden barrel  t table  l floor lamp  c chandelier  o ceiling light
+;          x pillar  y tree  p plant  u urn
+; Items:   k gold key  j silver key  f food  h first aid  a ammo  m machine gun  n rotary gun
+;          1-4 treasure  5 extra life  ! exit tile      Floor: .
+; Enemies and patrol waypoints for this level
+@enemy g guard stand S
+@enemy q guard stand N
+@enemy Q guard stand E ambush
+@enemy e guard patrol E
+@enemy i guard patrol W
+@enemy d dog patrol E
+@enemy z mutant stand N medium
+@enemy Z ss stand W
+@enemy s officer stand S
+@turn { S
+@turn } E
+@turn [ N
+@turn ] W
+########################################
+#WWWWWFWWWWW#TTTTTTTTTTTTTTTTTTT########
+#Wj.......uW#Ta...............3MMMMM####
+#W.........W#T......s..........M...M####
+#W.........W#T....t...t...t....D.o.E####
+#F....t..2.W#T...............Z.M...M####
+#W.Q.......W#T..o.....o.....o..MMMMM####
+#W.........W#T.................T########
+#W......q..W#T..........g......T########
+#Wp.......hW#T................mT########
+#WWWWWDWWWWWMTTTTSTTTTTTTTTTTTTT########
+#Mb.....g...........bRRRRRRRRRRRRRRR####
+#M..............g....Rr.....r.....rR####
+#M....x...x...x......R.............P####
+#V......o...o...o....R.}........i].R####
+#M.}e.............]..D....x...x....RRRRR
+#V....x...x...x......R.............R4.1R
+#M.}.d...........].f.R......o......&...R
+#Mb.........z.......bR............hR5.3R
+#MMMMDMMMMMMMMMMMMMMMR....x...x....RRRRR
+#####.###############R......a......R####
+#####o###############R......Z......R####
+#####.###############Rr...........rR####
+#####.###############RRRRRRRPRRRRRRR####
+#####D##################################
+##l.....l###############################
+##.......###############################
+##...o...###############################
+##.......###############################
+##...^...###############################
+##......a###############################
+########################################

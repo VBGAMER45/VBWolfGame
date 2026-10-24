@@ -1,0 +1,12 @@
+; VBWolf episode: the maps to play, in order (paths relative to this folder).
+; Add "secret" after a map that is only reached through a secret elevator
+; (an elevator switch used while standing on a "~" floor tile).
+@episode Machine Works
+w00.map
+w01.map
+w02.map
+w03.map
+w04.map
+w05.map
+w06.map
+w07.map secret

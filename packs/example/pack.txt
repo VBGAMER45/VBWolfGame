@@ -1,0 +1,2 @@
+; VBWolf content pack. See PACKS.md for the folder layout.
+@name Example Pack
