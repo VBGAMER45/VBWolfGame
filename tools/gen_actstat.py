@@ -1,0 +1,154 @@
+#!/usr/bin/env python3
+# This file is part of VBWolf, a Visual Basic 6 port of the Wolf3D Browser
+# Version GPL Source Code. Licensed under the GNU GPL version 2 or later;
+# see COPYING.txt.
+#
+# Generates modActStat.bas (actor state tables and hit points) from the
+# browser version's js/actstat.js and js/sprites.js:
+#   python tools/gen_actstat.py <wolf3d-browser>/js modActStat.bas
+#
+# Only the enemy types listed in TYPES are emitted; the port does not
+# include the boss, ghost and player-character actors.
+
+import os
+import re
+import sys
+
+TYPES = {'en_guard': 0, 'en_officer': 1, 'en_ss': 2, 'en_dog': 3, 'en_mutant': 9}
+THINKS = {                                  # JS function -> VB dispatch constant (see modAI.bas)
+    None: 'TH_NONE',
+    'Wolf.AI.T_Stand': 'TH_STAND', 'Wolf.AI.T_Path': 'TH_PATH', 'Wolf.AI.T_Chase': 'TH_CHASE',
+    'Wolf.AI.T_DogChase': 'TH_DOGCHASE', 'Wolf.AI.T_Shoot': 'TH_SHOOT', 'Wolf.AI.T_Bite': 'TH_BITE',
+    'Wolf.ActorAI.deathScream': 'TH_DEATHSCREAM',
+}
+STATES = ['st_stand', 'st_path1', 'st_path1s', 'st_path2', 'st_path3', 'st_path3s', 'st_path4',
+          'st_pain', 'st_pain1', 'st_shoot1', 'st_shoot2', 'st_shoot3', 'st_shoot4', 'st_shoot5',
+          'st_shoot6', 'st_shoot7', 'st_shoot8', 'st_shoot9', 'st_chase1', 'st_chase1s', 'st_chase2',
+          'st_chase3', 'st_chase3s', 'st_chase4', 'st_die1', 'st_die2', 'st_die3', 'st_die4', 'st_die5',
+          'st_die6', 'st_die7', 'st_die8', 'st_die9', 'st_dead', 'st_remove']
+SKILLS = 4
+
+
+def strip_comments(src):
+    src = re.sub(r'/\*.*?\*/', '', src, flags=re.S)
+    return re.sub(r'//[^\n]*', '', src)
+
+
+def parse_array(text, start):
+    """Parse a JS array literal of numbers, identifiers and nested arrays."""
+    tokens = re.findall(r'\[|\]|,|[A-Za-z_][\w.]*|-?\d+', text[start:])
+    pos = 0
+
+    def value():
+        nonlocal pos
+        tok = tokens[pos]
+        pos += 1
+        if tok == '[':
+            items = []
+            while tokens[pos] != ']':
+                if tokens[pos] == ',':
+                    pos += 1
+                    continue
+                items.append(value())
+            pos += 1
+            return items
+        return int(tok) if re.fullmatch(r'-?\d+', tok) else tok
+    return value()
+
+
+def array_after(src, marker):
+    i = src.index(marker)
+    return parse_array(src, src.index('[', i))
+
+
+def main():
+    jsdir, out = sys.argv[1], sys.argv[2]
+    sprites = strip_comments(open(os.path.join(jsdir, 'sprites.js'), encoding='utf-8').read())
+    names = array_after(sprites, 'var spriteNames')
+    sprite_index = {name.strip('"'): i for i, name in enumerate(names)}
+
+    raw = open(os.path.join(jsdir, 'actstat.js'), encoding='utf-8').read()
+    order = re.findall(r'^\s*// (en_\w+)', raw[raw.index('var objstate'):raw.index('var starthitpoints')], re.M)
+    src = strip_comments(raw)
+    null_row = [0, 'Wolf.SPR_DEMO', 0, 'null', 'null', 'Wolf.st_dead']
+    objstate = array_after(src, 'var objstate')
+    hitpoints = array_after(src, 'var starthitpoints')
+    if len(order) != len(objstate):
+        sys.exit('could not match the enemy comments to the state blocks')
+
+    def sprite(tok):
+        name = tok.replace('Wolf.', '').strip('"')
+        # quoted names in sprites.js are literal strings; look them up with quotes removed
+        return sprite_index[name]
+
+    lines = []
+    for etype, block in zip(order, objstate):
+        if etype not in TYPES:
+            continue
+        t = TYPES[etype]
+        lines.append("    ' %s" % etype)
+        for st, row in enumerate(block):
+            if row == 'ST_INFO_NULL':
+                row = null_row
+            rotate, tex, tics, think, action, nxt = row
+            think = None if think == 'null' else think
+            action = None if action == 'null' else action
+            for fn in (think, action):
+                if fn not in THINKS:
+                    sys.exit('%s state %d uses %s, which is not ported' % (etype, st, fn))
+            lines.append('    S %d, %d, %d, %d, %d, %s, %s, %d' % (
+                t, st, rotate, sprite(tex), tics, THINKS[think], THINKS[action],
+                STATES.index(nxt.replace('Wolf.', ''))))
+    for skill in range(SKILLS):
+        for etype, t in TYPES.items():
+            lines.append('    StartHitPoints(%d, %d) = %d' % (skill, t, hitpoints[skill][t]))
+    max_sprite = max(int(l.split(',')[3]) for l in lines if l.startswith('    S '))
+
+    with open(out, 'w', newline='\r\n') as f:
+        f.write('''Attribute VB_Name = "modActStat"
+Option Explicit
+
+' This file is part of VBWolf, a Visual Basic 6 port of the Wolf3D Browser
+' Version GPL Source Code, Copyright (C) 2012 id Software LLC, a ZeniMax
+' Media company.
+'
+' This program is free software: you can redistribute it and/or modify it
+' under the terms of the GNU General Public License as published by the Free
+' Software Foundation, either version 2 of the License, or (at your option)
+' any later version. It is distributed WITHOUT ANY WARRANTY; see COPYING.txt.
+'
+' GENERATED by tools/gen_actstat.py from js/actstat.js and js/sprites.js;
+' edit the generator, not this file. Holds the state tables of the enemy
+' types the port includes: per state, whether the sprite rotates, its base
+' sprite, how many tics it lasts, the think (every tic) and action (once,
+' when the state ends) routines, and the next state.
+
+Public Const NUM_ACTOR_TYPES As Long = 10
+Public Const ACTOR_SPRITE_MAX As Long = %d
+
+Public StRotate(0 To NUM_ACTOR_TYPES - 1, 0 To NUMSTATES - 1) As Boolean
+Public StTexture(0 To NUM_ACTOR_TYPES - 1, 0 To NUMSTATES - 1) As Long
+Public StTimeout(0 To NUM_ACTOR_TYPES - 1, 0 To NUMSTATES - 1) As Long
+Public StThink(0 To NUM_ACTOR_TYPES - 1, 0 To NUMSTATES - 1) As Long
+Public StAction(0 To NUM_ACTOR_TYPES - 1, 0 To NUMSTATES - 1) As Long
+Public StNext(0 To NUM_ACTOR_TYPES - 1, 0 To NUMSTATES - 1) As Long
+Public StartHitPoints(0 To 3, 0 To NUM_ACTOR_TYPES - 1) As Long
+
+Public Sub ActStat_Init()
+%s
+End Sub
+
+Private Sub S(ByVal t As Long, ByVal st As Long, ByVal rotate As Long, ByVal tex As Long, ByVal tics As Long, ByVal think As Long, ByVal action As Long, ByVal nxt As Long)
+    StRotate(t, st) = (rotate <> 0)
+    StTexture(t, st) = tex
+    StTimeout(t, st) = tics
+    StThink(t, st) = think
+    StAction(t, st) = action
+    StNext(t, st) = nxt
+End Sub
+''' % (max_sprite, '\n'.join(lines)))
+    print('%s: %d states, sprites up to %d' % (out, sum(1 for l in lines if l.startswith('    S ')), max_sprite))
+
+
+if __name__ == '__main__':
+    main()
