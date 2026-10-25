@@ -1,0 +1,16 @@
+# VB6 only reads source files with CRLF line endings
+*.bas text eol=crlf
+*.frm text eol=crlf
+*.cls text eol=crlf
+*.vbp text eol=crlf
+
+# Line Input only splits lines at CR, so pack.txt needs CRLF too
+*.txt text eol=crlf
+*.ini text eol=crlf
+
+# Game data
+*.map binary
+*.wav binary
+*.bmp binary
+*.png binary
+*.exe binary
